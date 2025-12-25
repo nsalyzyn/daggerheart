@@ -136,6 +136,7 @@ export default class DhpChatLog extends foundry.applications.sidebar.tabs.ChatLo
         const { moveIndex, actionIndex, movePath } = event.currentTarget.dataset;
         const parent = await foundry.utils.fromUuid(message.system.actor);
         const actionType = message.system.moves[moveIndex].actions[actionIndex];
+        const targetUuid = message.system.targetUuid;
         const cls = game.system.api.models.actions.actionsTypes[actionType.type];
         const action = new cls(
             {
@@ -146,7 +147,8 @@ export default class DhpChatLog extends foundry.applications.sidebar.tabs.ChatLo
                     type: CONFIG.DH.ITEM.originItemType.restMove,
                     itemPath: movePath,
                     actionIndex: actionIndex
-                }
+                },
+                targetUuid: targetUuid
             },
             { parent: parent.system }
         );

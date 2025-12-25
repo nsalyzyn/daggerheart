@@ -27,6 +27,10 @@ export default class TargetField extends fields.SchemaField {
         // If the Action is configured as self-targeted, set targets as the owner. Probably better way than to fallback to getDependentTokens
         if (this.target?.type === CONFIG.DH.GENERAL.targetTypes.self.id)
             targets = [this.actor.token ?? this.actor.prototypeToken];
+        else if (config.targetUuid) {
+            const actor = fromUuidSync(config.targetUuid);
+            targets = [actor.token ?? actor.prototypeToken];
+        }
         else {
             targets = Array.from(game.user.targets);
             if (this.target.type !== CONFIG.DH.GENERAL.targetTypes.any.id) {

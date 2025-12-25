@@ -193,7 +193,8 @@ export default class DhpDowntime extends HandlebarsApplicationMixin(ApplicationV
             user: game.user.id,
             system: {
                 moves: moves,
-                actor: this.actor.uuid
+                actor: this.actor.uuid,
+                targetUuid: this.actor.uuid
             },
             speaker: cls.getSpeaker(),
             title: game.i18n.localize(
