@@ -24,19 +24,15 @@
                                 <a data-action="removeMove" data-move-index="{{index}}"><i class="fa-solid fa-trash"></i></a>
                             </div>
                         </div>
-                        {{#if move.hasTarget}}
+                        {{#if (and move.hasTarget (not move.selfTargeted))}}
                             <div class="downtime-move-target">
                                 <label>{{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.target"}}:</label>
-                                {{#if move.selfTargeted }}
-                                    <span>{{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.targetSelf"}}</span>
-                                {{else}}
-                                    <select name="downtime-move-{{index}}">
-                                        <option value="{{../selfId}}">{{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.targetSelf"}}</option>
-                                        {{#each ../characters as | character |}}
-                                            <option value="{{character.uuid}}" {{#if (eq move.targetUuid character.uuid)}}selected="true"{{/if}}>{{character.name}}</option>
-                                        {{/each}}
-                                    </select>
-                                {{/if}}
+                                <select name="downtime-move-{{index}}">
+                                    <option value="{{../selfId}}">{{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.targetSelf"}}</option>
+                                    {{#each ../characters as | character |}}
+                                        <option value="{{character.uuid}}" {{#if (eq move.targetUuid character.uuid)}}selected="true"{{/if}}>{{character.name}}</option>
+                                    {{/each}}
+                                </select>
                             </div>
                         {{/if}}
                     </div>
