@@ -85,7 +85,9 @@ export default class DhpDowntime extends HandlebarsApplicationMixin(ApplicationV
 
         context.selectedMoves = this.selectedMoves;
         context.selfId = this.actor.uuid;
-        context.characters = game.actors.filter(x => x.type === 'character').filter(x => x.uuid !== this.actor.uuid);
+        context.characters = game.actors.filter(x => x.type === 'character')
+            .filter(x => x.testUserPermission(game.user, 'LIMITED'))
+            .filter(x => x.uuid !== this.actor.uuid);
 
         return context;
     }
