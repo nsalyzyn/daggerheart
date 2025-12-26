@@ -15,15 +15,20 @@
             {{#if selectedMoves}}
                 {{#each selectedMoves as |move index|}}
                     <div class="downtime-move">
-                        <div class="downtime-move-text">
-                            <i class="{{move.icon}} downtime-move-icon"></i>
-                            <span>{{move.name}}</span>
+                        <div class="downtime-move-top">
+                            <div class="downtime-move-text">
+                                <i class="{{move.icon}} downtime-move-icon"></i>
+                                <span>{{move.name}}</span>
+                            </div>
+                            <div class="downtime-move-action">
+                                <a data-action="removeMove" data-move-index="{{index}}"><i class="fa-solid fa-trash"></i></a>
+                            </div>
                         </div>
                         {{#if move.hasTarget}}
                             <div class="downtime-move-target">
-                                {{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.target"}}:
+                                <label>{{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.target"}}:</label>
                                 {{#if move.selfTargeted }}
-                                    {{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.targetSelf"}}
+                                    <span>{{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.targetSelf"}}</span>
                                 {{else}}
                                     <select name="downtime-move-{{index}}">
                                         <option value="{{../selfId}}">{{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.targetSelf"}}</option>
@@ -34,9 +39,6 @@
                                 {{/if}}
                             </div>
                         {{/if}}
-                        <div class="downtime-move-action">
-                            <a data-action="removeMove" data-move-index="{{index}}"><i class="fa-solid fa-trash"></i></a>
-                        </div>
                     </div>
                 {{/each}}
             {{else}}
