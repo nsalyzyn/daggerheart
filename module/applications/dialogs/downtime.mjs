@@ -12,6 +12,7 @@ export default class DhpDowntime extends HandlebarsApplicationMixin(ApplicationV
         this.moveData = foundry.utils.deepClone(
             game.settings.get(CONFIG.DH.id, CONFIG.DH.SETTINGS.gameSettings.Homebrew).restMoves
         );
+        this.selectedMoves = [];
         this.nrChoices = {
             shortRest: {
                 taken: 0,
@@ -40,6 +41,7 @@ export default class DhpDowntime extends HandlebarsApplicationMixin(ApplicationV
         position: { width: 'auto', height: 'auto' },
         actions: {
             selectMove: this.selectMove,
+            removeMove: this.removeMove,
             takeDowntime: this.takeDowntime
         },
         form: { handler: this.updateData, submitOnChange: true, closeOnSubmit: false }
@@ -51,14 +53,6 @@ export default class DhpDowntime extends HandlebarsApplicationMixin(ApplicationV
             template: 'systems/daggerheart/templates/dialogs/downtime/downtime.hbs'
         }
     };
-
-    _attachPartListeners(partId, htmlElement, options) {
-        super._attachPartListeners(partId, htmlElement, options);
-
-        htmlElement
-            .querySelectorAll('.activity-container')
-            .forEach(element => element.addEventListener('contextmenu', this.deselectMove.bind(this)));
-    }
 
     async _prepareContext(_options) {
         const context = await super._prepareContext(_options);
@@ -88,6 +82,10 @@ export default class DhpDowntime extends HandlebarsApplicationMixin(ApplicationV
         context.refreshables = this.refreshables;
 
         context.disabledDowntime = shortRestMovesSelected === 0 && longRestMovesSelected === 0;
+
+        context.selectedMoves = this.selectedMoves;
+        context.selfId = this.actor.uuid;
+        context.characters = game.actors.filter(x => x.type === 'character').filter(x => x.uuid !== this.actor.uuid);
 
         return context;
     }
@@ -145,56 +143,36 @@ export default class DhpDowntime extends HandlebarsApplicationMixin(ApplicationV
             return;
         }
 
-        this.moveData[category].moves[move].selected = this.moveData[category].moves[move].selected
-            ? this.moveData[category].moves[move].selected + 1
-            : 1;
+        const selectedMove = this.moveData[category].moves[move];
+        selectedMove.category = category;
+        selectedMove.movePath = `${category}.moves.${move}`
+        selectedMove.hasTarget = selectedMove.actions.filter(x => x.target.type).length > 0;
+        selectedMove.selfTargeted = selectedMove.actions.filter(x => x.target.type === 'self').length > 0;
+        if (selectedMove.hasTarget) {
+            selectedMove.targetUuid = this.actor.uuid;
+        }
+
+        this.selectedMoves.push(selectedMove);
 
         this.render();
     }
 
-    deselectMove(event) {
-        const button = event.target.closest('.activity-container');
-        const { move, category } = button.dataset;
-        this.moveData[category].moves[move].selected = this.moveData[category].moves[move].selected
-            ? this.moveData[category].moves[move].selected - 1
-            : 0;
+    static removeMove(_, target) {
+        const { moveIndex } = target.dataset;
 
+        this.selectedMoves.splice(moveIndex, 1);
         this.render();
-
-        // On macOS with a single-button mouse (e.g. a laptop trackpad),
-        // right-click is triggered with ctrl+click, which triggers both a
-        // `contextmenu` event and a regular click event. We need to stop
-        // event propagation to prevent the click event from triggering the
-        // `selectMove` function and undoing the change we just made.
-        event.stopPropagation();
-
-        // Having stopped propagation, we're no longer subject to Foundry's
-        // default `contextmenu` handler, so we also have to prevent the
-        // default behaviour to prevent a context menu from appearing.
-        event.preventDefault();
     }
 
     static async takeDowntime() {
-        const moves = Object.keys(this.moveData).flatMap(categoryKey => {
-            const category = this.moveData[categoryKey];
-            return Object.keys(category.moves)
-                .filter(x => category.moves[x].selected)
-                .flatMap(key => {
-                    const move = category.moves[key];
-                    return [...Array(move.selected).keys()].map(_ => ({
-                        ...move,
-                        movePath: `${categoryKey}.moves.${key}`
-                    }));
-                });
-        });
+        const moves = this.selectedMoves;
 
         const cls = getDocumentClass('ChatMessage');
         const msg = {
             user: game.user.id,
             system: {
                 moves: moves,
-                actor: this.actor.uuid,
-                targetUuid: this.actor.uuid
+                actor: this.actor.uuid
             },
             speaker: cls.getSpeaker(),
             title: game.i18n.localize(
@@ -220,14 +198,10 @@ export default class DhpDowntime extends HandlebarsApplicationMixin(ApplicationV
         cls.create(msg);
 
         // Reset selection and update number of taken moves
-        for (const [catName, category] of Object.entries(this.moveData)) {
-            for (const move of Object.values(category.moves)) {
-                if (move.selected > 0) {
-                    this.nrChoices[catName].taken += move.selected;
-                    move.selected = 0;
-                }
-            }
+        for (const selectedMove of this.selectedMoves) {
+            this.nrChoices[selectedMove.category].taken += 1;
         }
+        this.selectedMoves = [];
 
         // We can close the window and refresh resources when all moves are taken
         if (
@@ -257,12 +231,17 @@ export default class DhpDowntime extends HandlebarsApplicationMixin(ApplicationV
         }
     }
 
-    static async updateData(event, element, formData) {
-        this.customActivity = foundry.utils.mergeObject(this.customActivity, formData.object);
+    static async updateData(event, target, formData) {
+        for (const name in formData.object) {
+            if (name.startsWith('downtime-move-')) {
+                const index = parseInt(name.substring(14));
+                this.selectedMoves[index].targetUuid = formData.object[name];
+            }
+        }
         this.render();
     }
 
     nrSelectedMoves(category) {
-        return Object.values(this.moveData[category].moves).reduce((acc, x) => acc + (x.selected ?? 0), 0);
+        return this.selectedMoves.filter(x => x.category === category).length;
     }
 }

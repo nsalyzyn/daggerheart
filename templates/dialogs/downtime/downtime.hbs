@@ -9,6 +9,43 @@
     </div>
 
     <fieldset>
+        <legend>{{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.title"}}</legend>
+
+        <div class="downtime-moves-container">
+            {{#if selectedMoves}}
+                {{#each selectedMoves as |move index|}}
+                    <div class="downtime-move">
+                        <div class="downtime-move-text">
+                            <i class="{{move.icon}} downtime-move-icon"></i>
+                            <span>{{move.name}}</span>
+                        </div>
+                        {{#if move.hasTarget}}
+                            <div class="downtime-move-target">
+                                {{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.target"}}:
+                                {{#if move.selfTargeted }}
+                                    {{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.targetSelf"}}
+                                {{else}}
+                                    <select name="downtime-move-{{index}}">
+                                        <option value="{{../selfId}}">{{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.targetSelf"}}</option>
+                                        {{#each ../characters as | character |}}
+                                            <option value="{{character.uuid}}" {{#if (eq move.targetUuid character.uuid)}}selected="true"{{/if}}>{{character.name}}</option>
+                                        {{/each}}
+                                    </select>
+                                {{/if}}
+                            </div>
+                        {{/if}}
+                        <div class="downtime-move-action">
+                            <a data-action="removeMove" data-move-index="{{index}}"><i class="fa-solid fa-trash"></i></a>
+                        </div>
+                    </div>
+                {{/each}}
+            {{else}}
+                {{localize "DAGGERHEART.APPLICATIONS.Downtime.moves.noMoves"}}
+            {{/if}}
+        </div>
+    </fieldset>
+
+    <fieldset>
         <legend>{{localize "DAGGERHEART.APPLICATIONS.Downtime.refreshable.title"}}</legend>
 
         <div class="refreshables-container {{#if (and shortRestMoves longRestMoves)}}wide{{/if}}">
