@@ -26,7 +26,12 @@ export default class AdversarySheet extends DHBaseActorSheet {
                 }
             ]
         },
-        dragDrop: [{ dragSelector: '[data-item-id]', dropSelector: null }]
+        dragDrop: [
+            {
+                dragSelector: '[data-item-id][draggable="true"], [data-item-id] [draggable="true"]',
+                dropSelector: null
+            }
+        ],
     };
 
     static PARTS = {
@@ -163,6 +168,16 @@ export default class AdversarySheet extends DHBaseActorSheet {
             relativeTo: this.document
         });
     }
+
+    /** @inheritdoc */
+    async _onDragStart(event) {
+        const inventoryItem = event.currentTarget.closest('.inventory-item');
+        if (inventoryItem) {
+            event.dataTransfer.setDragImage(inventoryItem.querySelector('img'), 60, 0);
+        }
+        super._onDragStart(event);
+    }
+
 
     /* -------------------------------------------- */
     /*  Application Clicks Actions                  */
