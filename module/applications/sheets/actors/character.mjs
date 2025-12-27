@@ -319,6 +319,23 @@ export default class CharacterSheet extends DHBaseActorSheet {
                 }
             },
             {
+                name: 'recall',
+                icon: 'fa-solid fa-bolt-lightning',
+                condition: target => {
+                    const doc = getDocFromElementSync(target);
+                    return doc && doc.system.inVault;
+                },
+                callback: async target => {
+                    const doc = await getDocFromElement(target);
+                    const actorLoadout = doc.actor.system.loadoutSlot;
+                    if (!actorLoadout.available) {
+                        ui.notifications.warn(game.i18n.localize('DAGGERHEART.UI.Notifications.loadoutMaxReached'));
+                        return;
+                    }
+                    return doc.update({ 'system.inVault': false });
+                }
+            },
+            {
                 name: 'toVault',
                 icon: 'fa-solid fa-arrow-down',
                 condition: target => {
