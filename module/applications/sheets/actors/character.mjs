@@ -325,14 +325,31 @@ export default class CharacterSheet extends DHBaseActorSheet {
                     const doc = getDocFromElementSync(target);
                     return doc && doc.system.inVault;
                 },
-                callback: async target => {
+                callback: async (target, event) => {
                     const doc = await getDocFromElement(target);
                     const actorLoadout = doc.actor.system.loadoutSlot;
                     if (!actorLoadout.available) {
                         ui.notifications.warn(game.i18n.localize('DAGGERHEART.UI.Notifications.loadoutMaxReached'));
                         return;
                     }
-                    return doc.update({ 'system.inVault': false });
+                    if (doc.system.recallCost == 0) {
+                        return doc.update({ 'system.inVault': false });
+                    }
+                    const type = 'effect';
+                    const cls = game.system.api.models.actions.actionsTypes[type];
+                    const action = new cls({
+                        ...cls.getSourceConfig(doc.system),
+                        type: type,
+                        chatDisplay: false,
+                        cost: [{
+                            key: 'stress',
+                            value: doc.system.recallCost
+                        }]
+                    }, { parent: doc.system });
+                    const config = await action.use(event);
+                    if (config) {
+                        return doc.update({ 'system.inVault': false });
+                    }
                 }
             },
             {
